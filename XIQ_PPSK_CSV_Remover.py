@@ -264,9 +264,8 @@ def main():
     ppsk_del_error = 0
     pcg_del_error = 0
 
-    # Create Missing CSV Users 
+    # Delete CSV Users 
     for index, row in df.iterrows():
-        user_created = False
         if row['User Group Name'] not in group_roles.keys():
             msg = (f"{row['User Group Name']} group name for CSV user {row['User Name']} is not configured in the script.")
             logging.warning(msg)

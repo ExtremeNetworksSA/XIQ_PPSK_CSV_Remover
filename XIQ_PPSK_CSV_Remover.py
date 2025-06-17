@@ -12,7 +12,7 @@ from pprint import pprint
 ####################################
 # written by:   Tim Smith
 # e-mail:       tismith@extremenetworks.com
-# date:         26th September 2022
+# date:         26th May 2025
 # version:      2.0.0
 ####################################
 
@@ -115,27 +115,7 @@ def retrievePPSKUsers(usergroupID):
         print(f"completed page {page} of {rawList['total_pages']} collecting PPSK Users")
         page = rawList['page'] + 1 
     return ppskUsers
-'''
-def CreatePPSKuser(payload, name):
-    url = URL + "/endusers"
 
-    response = requests.post(url, headers=headers, data=payload, verify=True)
-    if response is None:
-        log_msg = "Error adding PPSK user - no response!"
-        logging.error(log_msg)
-        raise TypeError(log_msg)
-
-    elif response.status_code != 200:
-        log_msg = f"Error adding PPSK user {name} - HTTP Status Code: {str(response.status_code)}"
-        logging.error(log_msg)
-        logging.warning(f"\t\t{response.json()}")
-        raise TypeError(log_msg)
-
-    elif response.status_code ==200:
-        logging.info(f"successfully created PPSK user {name}")
-        print(f"successfully created PPSK user {name}")
-        return True
-'''
 def deleteUser(userId):
     url = URL + "/endusers/" + str(userId)
     
@@ -151,31 +131,7 @@ def deleteUser(userId):
         raise TypeError(log_msg)
     elif response.status_code == 200:
         return 'Success', str(userId)
-'''
-def addUserToPcg(policy_id, name, email, user_group_name):
-    url = URL + "/pcgs/key-based/network-policy-" + str(policy_id) + "/users"
-    payload = json.dumps({
-                  "users": [
-                    {
-                      "name": name,
-                      "email": email,
-                      "user_group_name": user_group_name
-                    }
-                  ]
-                })
-    response = requests.post(url, headers=headers, data=payload, verify=True)
-    if response is None:
-        log_msg = f"- no response!"
-        logging.error(log_msg)
-        raise TypeError(log_msg)
-    elif response.status_code != 202:
-        log_msg = f"HTTP Status Code: {str(response.status_code)}"
-        logging.error(log_msg)
-        logging.warning(f"\t\t{response.json()}")
-        raise TypeError(log_msg)
-    elif response.status_code == 202:
-        return 'Success'
-'''
+
 def retrievePCGUsers(policy_id):
     page = 1
     pageCount = 1
@@ -240,7 +196,6 @@ def main():
 
     
     df = df.replace(np.nan,"")
-
     ## Get token for Main Account ##
     if not XIQ_token:
         try:
@@ -370,7 +325,14 @@ def main():
                         continue
             result = ''
             ## Delete PPSK user ##
-            PPSKUser = (list(filter(lambda PPSKUser: PPSKUser['email_address'] == row['Email'], ppsk_users)))[0]
+            try:
+                PPSKUser = (list(filter(lambda PPSKUser: PPSKUser['email_address'] == row['Email'], ppsk_users)))[0]
+            except IndexError:
+                log_msg = f"User {row['User Name']}'s email address '{row['Email']}' was not found in XIQ PPSK users list."
+                logging.error(log_msg)
+                print(log_msg)
+                ppsk_del_error+=1
+                continue
             try:
                 result, userid = deleteUser(PPSKUser['id'])
             except TypeError as e:
@@ -384,7 +346,7 @@ def main():
                 print(log_msg)
                 continue
             if result == 'Success':
-                log_msg = f"User {row['User Name']} - {userid} was successfully deleted."
+                log_msg = f"User {row['User Name']} - {userid} was successfully deleted from PPSK Group."
                 logging.info(log_msg)
                 print(log_msg)  
 
